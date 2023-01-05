@@ -14,8 +14,8 @@ func main() {
 	// Create a UDP connection
 	var netservice = NTPService{}
 	conn, err := net.ListenUDP("udp", &net.UDPAddr{
-		//IP:   net.IPv4zero,
-		IP:   net.ParseIP("192.168.16.120"),
+		IP: net.IPv4zero,
+		//IP:   net.ParseIP("192.168.16.120"),
 		Port: 123,
 	})
 	if err != nil {
@@ -50,10 +50,6 @@ func main() {
 			//先尝试标准NTP不行MSNTP 再不行抛弃
 			//如果是通用标准NTP服务调用解析服务
 			netservice.HandleStanderNTPServer(buf, conn, addr)
-			continue
-		} else {
-			//if IsMicrosoftNtpRequest(buf[0:n]) {
-			netservice.HandleMicroSoftNTPServer(buf, conn, addr)
 			continue
 		}
 
