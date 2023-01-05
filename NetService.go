@@ -79,6 +79,11 @@ func ParseMSPacket(buf []byte) (MicrosoftNTPPacket, error) {
 
 // ParseNTPPacket parses an NTP packet
 func ParseNTPPacket(buf []byte) (NTPv3Packet, error) {
+	/*
+		LeapIndicator  byte      //跳跃指示器（LeapIndicator）：2位，指示NTP协议运行的状态，分为正常、提前、延后和未知状态。
+		VersionNumber  byte      //版本号（VersionNumber）：3位，表示NTP协议的版本号。
+		Mode           byte      //模式（Mode）：3位，指示报文的模式，分为客户端、服务器、广播和多播模式。	1byte
+	*/
 	var pkt NTPv3Packet
 	// Parse packet
 	pkt.LeapIndicator = (buf[0] >> 6) & 0x03
@@ -198,24 +203,8 @@ type NTPv3Packet struct {
 	Authentication []byte    //认证（Authentication）：32位，用于对报文进行认证和安全传输。	4byte
 }
 
-type NTPvPacket struct {
-	LeapIndicator  byte      //跳跃指示器（LeapIndicator）：2位，指示NTP协议运行的状态，分为正常、提前、延后和未知状态。
-	VersionNumber  byte      //版本号（VersionNumber）：3位，表示NTP协议的版本号。
-	Mode           byte      //模式（Mode）：3位，指示报文的模式，分为客户端、服务器、广播和多播模式。	1byte
-	Stratum        byte      //层次（Stratum）：8位，表示报文的传输层次，分为主服务器、从服务器、参考源和其他等。	1byte
-	Poll           byte      //轮询时间（Poll）：8位，指示客户端请求服务器发送报文的间隔。	1byte
-	Precision      byte      //精度（Precision）：8位，表示报文发送时与UTC时间之间的偏移量的精度。	1byte
-	RootDelay      uint32    //根延迟（RootDelay）：32位，表示客户端与服务器之间的网络延迟。	4byte
-	RootDispersion uint32    //根失望（RootDispersion）：32位，表示客户端与服务器的时间差。	4byte
-	ReferenceID    uint32    //参考ID（ReferenceID）：32位，表示参考时间源的ID。	4byte
-	ReferenceTime  time.Time //参考时间（ReferenceTime）：参考时间，表示参考时间源的时间。 8byte
-	OriginTime     time.Time //原始时间（OriginTime）：原始时间，表示报文发出时的时间。	8byte
-	ReceiveTime    time.Time //接收时间（ReceiveTime）：接收时间，表示报文接收时的时间。	8byte
-	TransmitTime   time.Time //发送时间（TransmitTime）：发送时间，表示报文发送时的时间。	8byte
-}
-
-//NTPv4 structure
-type NTPv4 struct {
+// NTPv4 structure
+type NTPv4Packet struct {
 	LeapIndicator     byte     //跳跃指示器（LeapIndicator）：2bit，指示NTP协议运行的状态，分为正常、提前、延后和未知状态。
 	Version           uint8    //NTP版本号：3bit，用来指示使用的NTP版本号
 	Mode              uint8    //模式：3bit，用来指示NTP客户端和服务器之间的交互方式
@@ -234,6 +223,7 @@ type NTPv4 struct {
 
 // 判断是否为标准NTP请求报文
 func IsStandardNtpRequest(pkt []byte) bool {
+
 	return (pkt[1] == 3) //pkt[0]=219 二进制为11011011
 }
 
