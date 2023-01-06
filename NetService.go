@@ -53,10 +53,11 @@ func ParseNTPPacket(buf []byte) (NTPv4Packet, error) {
 	// Parse packet
 	//假设初始值位0x23 二进制位（0b 00100011） wireshark抓包后识别 0-1 LI 位00 2-4位LN 100 5-7位Mode 11
 	//LeapIndicator 跳跃指示器（LeapIndicator）：2bit，指示NTP协议运行的状态，分为正常、提前、延后和未知状态。
-	pkt.LeapIndicator = (buf[0] >> 6) //向右移动6位左侧剩余2位 就是头2位
+	pkt.LeapIndicator = (buf[0] >> 6) //向右移动6位左侧剩余2位 就是头2位  |00000011=3
 	//VersionNumber NTP版本号：3bit，用来指示使用的NTP版本号
-	pkt.Version = (buf[0] >> 4) & (0b000011)
-	pkt.Mode = buf[0] & (0b00000011)
+	var temp = (buf[0] >> 4) //0b1101
+	pkt.Version = (temp & (0b111)) >> 1
+	pkt.Mode = buf[0] & (0b111)
 	pkt.Stratum = buf[1]                                                                               //NTP服务器的级别：8bit，用来指示NTP服务器的级别
 	pkt.PollInterval = buf[2]                                                                          //客户端向服务器查询时间的间隔：8bit，用来指示客户端向服务器发送请求的间隔
 	pkt.Precision = buf[3]                                                                             ////NTP服务器时间的精度：8bit，用来指示NTP服务器时间的精度 1.0seconed=0b000000
@@ -90,12 +91,15 @@ func CreateNTPResponse(pkt NTPv4Packet) ([]byte, error) {
 		TransmitTimestamp uint64   //发送时间戳：64bit，用来指示服务器发送响应的时间
 		Auth              [8]uint8 //Authentication字段：64bit，用来验证报文的可靠性
 	*/
-	buf[0] = (pkt.LeapIndicator << 6) | (pkt.Version << 3) | pkt.Mode
-	buf[1] = pkt.Stratum
-	buf[2] = pkt.PollInterval
-	buf[3] = byte(pkt.Precision)
-	binary.BigEndian.PutUint32(buf[4:8], uint32(pkt.RootDelay))
-	binary.BigEndian.PutUint32(buf[8:12], uint32(pkt.RootDelay))
+	//buf[0]最后3位 客户端3 服务端4  client 00 100 011 server 00 100
+
+	buf[0] = buf[0] & 0b11111100
+	//buf[0] = (pkt.LeapIndicator << 6) | (pkt.Version << 3) | pkt.Mode
+	buf[1] = 0b00000011                                         //pkt.Stratum //服务器时间级别自定义为3 0b00000011=3  来时其他 2 1 级同步结果
+	buf[2] = 0b00000000                                         //pkt.PollInterval 可以设置为0对服务端而言 该值无意义
+	buf[3] = 0b00000000                                         //pkt.Precision NTP服务器时间的精度：8bit，用来指示NTP服务器时间的精度
+	binary.BigEndian.PutUint32(buf[4:8], uint32(pkt.RootDelay)) //根延迟：32bit，用来指示NTP客户端和服务器之间的延迟 RootDelay值 不包含网络传输所需时间，而是由NTP服务器从四个精确的NTP服务器获取标准时间，并计算出与服务器的延迟，然后根据计算出的延迟值计算出RootDelay的值。
+	binary.BigEndian.PutUint32(buf[8:12], uint32(pkt.RootDisp))
 	binary.BigEndian.PutUint32(buf[12:16], pkt.ReferenceID)
 	binary.BigEndian.PutUint32(buf[16:20], uint32(pkt.RefTimestamp+2208988800))
 	binary.BigEndian.PutUint32(buf[20:24], uint32(pkt.OrigTimestamp+2208988800))
@@ -130,8 +134,8 @@ type NTPv4Packet struct {
 
 // 判断是否为标准NTP请求报文
 func IsStandardNtpRequest(pkt []byte) bool {
-
-	return (pkt[1] == 3) //pkt[0]=219 二进制为11011011
+	return true
+	//return (pkt[1] == 3) //pkt[0]=219 二进制为11011011
 }
 
 // 判断是否为Microsoft NTP请求报文
