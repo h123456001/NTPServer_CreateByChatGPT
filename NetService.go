@@ -71,7 +71,6 @@ func ParseNTPPacket(buf []byte) (NTPv4Packet, error) {
 	return pkt, nil
 }
 
-// CreateNTPResponse creates an NTP response packet
 func CreateNTPResponse(pkt NTPv4Packet) ([]byte, error) {
 	// Create response packet
 	var buf [NtpV4PacketSize]byte
@@ -94,13 +93,19 @@ func CreateNTPResponse(pkt NTPv4Packet) ([]byte, error) {
 	//buf[0]最后3位 客户端3 服务端4  client 00 100 011 server 00 100
 
 	buf[0] = buf[0] & 0b11111100
+	var test byte = 0b11111100
+	fmt.Println(test << 6 >> 6)
 	//buf[0] = (pkt.LeapIndicator << 6) | (pkt.Version << 3) | pkt.Mode
-	buf[1] = 0b00000011                                         //pkt.Stratum //服务器时间级别自定义为3 0b00000011=3  来时其他 2 1 级同步结果
-	buf[2] = 0b00000000                                         //pkt.PollInterval 可以设置为0对服务端而言 该值无意义
-	buf[3] = 0b00000000                                         //pkt.Precision NTP服务器时间的精度：8bit，用来指示NTP服务器时间的精度
-	binary.BigEndian.PutUint32(buf[4:8], uint32(pkt.RootDelay)) //根延迟：32bit，用来指示NTP客户端和服务器之间的延迟 RootDelay值 不包含网络传输所需时间，而是由NTP服务器从四个精确的NTP服务器获取标准时间，并计算出与服务器的延迟，然后根据计算出的延迟值计算出RootDelay的值。
-	binary.BigEndian.PutUint32(buf[8:12], uint32(pkt.RootDisp))
-	binary.BigEndian.PutUint32(buf[12:16], pkt.ReferenceID)
+	buf[1] = 0b00000011 //pkt.Stratum //服务器时间级别自定义为3 0b00000011=3  来时其他 2 1 级同步结果
+	buf[2] = 0b00000000 //pkt.PollInterval 可以设置为0对服务端而言 该值无意义
+	buf[3] = 0b00000000 //pkt.Precision NTP服务器时间的精度：8bit，用来指示NTP服务器时间的精度
+	copy(buf[4:8], []byte{0, 0, 0, 0})
+	//binary.BigEndian.PutUint32(buf[4:8], uint32(pkt.RootDelay)) //根延迟：32bit，用来指示NTP客户端和服务器之间的延迟 RootDelay值 不包含网络传输所需时间，而是由NTP服务器从四个精确的NTP服务器获取标准时间，并计算出与服务器的延迟，然后根据计算出的延迟值计算出RootDelay的值。---RootDelay值取决于NTP服务器之间的网络延迟，如果没有其他NTP服务器可参考，可以将RootDelay值设置为0或较小的值。
+	copy(buf[8:12], []byte{0, 0, 0, 0})
+	//binary.BigEndian.PutUint32(buf[8:12], uint32(pkt.RootDisp)) //RootDisp值是根据RootDelay值计算出来的，如果RootDelay值设置为0或较小的值，那么RootDisp值也会很小。
+	//localserverip:=net.Conn.LocalAddr()
+	//copy(buf[12:16], localserverip)
+	//binary.BigEndian.PutUint32(buf[12:16], pkt.ReferenceID)//一般为服务器ipv4
 	binary.BigEndian.PutUint32(buf[16:20], uint32(pkt.RefTimestamp+2208988800))
 	binary.BigEndian.PutUint32(buf[20:24], uint32(pkt.OrigTimestamp+2208988800))
 	binary.BigEndian.PutUint32(buf[24:28], uint32(pkt.RecvTimestamp+2208988800))
