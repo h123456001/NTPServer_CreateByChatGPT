@@ -104,18 +104,15 @@ func CreateNTPResponse(pkt NTPv4Packet) ([]byte, error) {
 	copy(buf[8:12], []byte{0, 0, 0, 0})
 	//binary.BigEndian.PutUint32(buf[8:12], uint32(pkt.RootDisp)) //RootDisp值是根据RootDelay值计算出来的，如果RootDelay值设置为0或较小的值，那么RootDisp值也会很小。
 	//localserverip:=net.Conn.LocalAddr()
-	//copy(buf[12:16], localserverip)
+	copy(buf[12:16], net.IPv4(192, 168, 16, 120))
 	//binary.BigEndian.PutUint32(buf[12:16], pkt.ReferenceID)//一般为服务器ipv4
-	binary.BigEndian.PutUint32(buf[16:20], uint32(pkt.RefTimestamp+2208988800))
-	binary.BigEndian.PutUint32(buf[20:24], uint32(pkt.OrigTimestamp+2208988800))
-	binary.BigEndian.PutUint32(buf[24:28], uint32(pkt.RecvTimestamp+2208988800))
+	//binary.BigEndian.PutUint32(buf[16:20], uint32(pkt.RefTimestamp+2208988800))// RefTimestamp可以参考通用的NTP服务器中的时间戳，如果没有可用的NTP服务器，可以使用服务端系统的当前时间戳。
+	copy(buf[16:24], time.Now().String())
+	binary.BigEndian.PutUint32(buf[24:32], uint32(pkt.OrigTimestamp+2208988800)) //客户端时间戳 OrigTimestamp+2208988800的意思是将OrigTimestamp的时间戳从1970年1月1日0点转换为1900年1月1日0点的时间戳，NTP协议使用的是1900年1月1日0点的时间戳。
+	binary.BigEndian.PutUint32(buf[32:40], uint32(pkt.RecvTimestamp+2208988800))
 	// Set transmit time to current time
 	transmitTime := time.Now().Unix() + 2208988800
-	binary.BigEndian.PutUint32(buf[28:32], uint32(transmitTime))
-	buf[32] = 0 // No authentication
-	buf[33] = 0
-	buf[34] = 0
-	buf[35] = 0
+	binary.BigEndian.PutUint32(buf[40:48], uint32(transmitTime))
 	return buf[:], nil
 }
 
