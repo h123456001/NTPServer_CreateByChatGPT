@@ -1,3 +1,5 @@
+package main
+
 /*那用Go语言开发NTP服务端 读取配置文件ntpserver.conf，配置文件内有：
 #上级NTP服务器的IP地址 不填写表示本地实际
 ntpserverip:10.10.10.10
@@ -8,7 +10,7 @@ updatefrequency:3600
 10秒后 启动自定义的NTP服务器。
 配置文件内有值的情况下：先作为客户端请求远程NTP服务器时间更新本地时间。并获取作为NTP服务器需要填入的RootDelay、ReferenceID等参数 存在内存变量里。
 配置文件内无值的情况下：直接作为NTP服务器 填入自定义的RootDelay、ReferenceID等参数  等待客户端来同步时间。
-*/
+
 package main
 
 import (
@@ -204,3 +206,4 @@ func main() {
 	// 启动NTP服务
 	startNTPServer()
 }
+*/

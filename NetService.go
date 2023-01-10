@@ -91,10 +91,14 @@ func CreateNTPResponse(pkt NTPv4Packet) ([]byte, error) {
 		Auth              [8]uint8 //Authentication字段：64bit，用来验证报文的可靠性
 	*/
 	//buf[0]最后3位 客户端3 服务端4  client 00 100 011 server 00 100
-
+	ln := pkt.LeapIndicator
+	ver := uint8(4) //pkt.Version
+	mode := pkt.Mode + 0b00000001
+	result := (ln << 6) | (ver << 3) | mode
+	buf[0] = result
 	buf[0] = buf[0] & 0b11111100
-	var test byte = 0b11111100
-	fmt.Println(test << 6 >> 6)
+	//var test byte = 0b11111100
+	fmt.Println("buf[0]:%v", buf[0])
 	//buf[0] = (pkt.LeapIndicator << 6) | (pkt.Version << 3) | pkt.Mode
 	buf[1] = 0b00000011 //pkt.Stratum //服务器时间级别自定义为3 0b00000011=3  来时其他 2 1 级同步结果
 	buf[2] = 0b00000000 //pkt.PollInterval 可以设置为0对服务端而言 该值无意义
@@ -114,6 +118,7 @@ func CreateNTPResponse(pkt NTPv4Packet) ([]byte, error) {
 	transmitTime := time.Now().Unix() + 2208988800
 	binary.BigEndian.PutUint32(buf[40:48], uint32(transmitTime))
 	return buf[:], nil
+
 }
 
 // NTPv4 structure
