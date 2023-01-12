@@ -66,7 +66,13 @@ func ParseNTPPacket(buf []byte) (NTPv4Packet, error) {
 	pkt.ReferenceID = binary.BigEndian.Uint32(buf[12:16]) //参考标识符：32bit，用来指示参考时钟的标识符https://www.rfc-editor.org/rfc/rfc5905 搜索关键字"Reference ID" 3/17
 	//pkt.RefTimestamp = time.Unix(int64(binary.BigEndian.Uint32(buf[16:24])-2208988800), 0).Unix()      //参考时间戳：64bit，用来指示服务器的参考时间
 	clentReftime := binary.BigEndian.Uint64(buf[16:24]) //客户端的unix时间戳 utc,
-
+	fmt.Println(clentReftime)
+	fmt.Println("client UnixTime=", time.Unix(int64(clentReftime), 0).UTC(), "TimeUnixMicro=", time.UnixMicro(int64(clentReftime)).UTC())
+	//从buf中解析出RefTimeStamp
+	refTimeStamp := binary.BigEndian.Uint32(buf[40:44])
+	//将RefTimeStamp转换成时间格式
+	fmt.Println("RefTimeStamp：", refTimeStamp)
+	fmt.Println("RefTimeStamp标准时间格式：", time.Unix(int64(refTimeStamp-2208988800), 0)) //----这里时间就对了是客户端现在的时间----
 	pkt.RefTimestamp = time.Unix(int64(binary.BigEndian.Uint32(buf[16:24])), 0).Unix()
 	pkt.OrigTimestamp = time.Unix(int64(binary.BigEndian.Uint32(buf[24:32])-2208988800), 0).Unix()     //发出时间戳：64bit，用来指示客户端发出请求的时间
 	pkt.RecvTimestamp = time.Unix(int64(binary.BigEndian.Uint32(buf[32:40])-2208988800), 0).Unix()     //接收时间戳：64bit，用来指示服务器接收请求的时间
